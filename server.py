@@ -84,7 +84,7 @@ def create_task():
         for i in urls:
             OneJob3 = {
                 "filesize": 0,
-                "url": url
+                "url":i 
             }
             JobList.append(OneJob3)
     else:
