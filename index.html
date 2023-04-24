@@ -97,14 +97,16 @@
                     this.tableData = this.tasks.filter((a) => {
                         if (a.completeTime == 0)
                             return true
-                        if (this.onlyexist)
+                        if (this.onlyexist) {
+                            if (a.state== 11) return false;
                             return a.exist
+                        }
                         return true
                     }).map((a, idx) => {
                         let { downTime, progress, speed, name, size, createTime, state, type } = a;
                         name = name + ' state:' + state + ' type:' + type;
-                        if(state==11){
-                            speed =  size/downTime
+                        if (state == 11) {
+                            speed = size / downTime
                         }
                         if (speed >= 1000) {
                             speed = (speed / 1000000).toFixed(2) + 'MB/s'
