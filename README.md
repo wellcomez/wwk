@@ -23,3 +23,6 @@ username = 369369
 password = 369369 
 ~~~
 put config.ini under `conf-folder`
+
+## use
+visis http://xxxx:9003 
