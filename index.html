@@ -1,0 +1,183 @@
+<html>
+<script src="https://cdn.jsdelivr.net/npm/vue@2/dist/vue.js"></script>
+<script src="https://lf3-cdn-tos.bytecdntp.com/cdn/expire-1-M/axios/0.26.0/axios.js"></script>
+<!-- 引入ElementUI样式 -->
+<link rel="stylesheet" href="https://unpkg.com/element-ui/lib/theme-chalk/index.css">
+<script src="https://unpkg.com/vue/dist/vue.js"></script>
+<!-- 引入ElementUI组件库 -->
+<script src="https://unpkg.com/element-ui/lib/index.js"></script>
+
+<body>
+    <style>
+        .magiclinkinput {
+            height: 200px;
+            width: 400px;
+            padding: 5px;
+            /* aligns text to the top */
+        }
+    </style>
+    <div id="app">
+        {{ message }}
+        <el-input type="textarea" :rows="4" placeholder="磁力链" v-model="url">
+        </el-input>
+        <el-button v-on:click="getdownload" size="mini" type="primary" icon="el-icon-refresh">刷新任务</el-button>
+        <el-button type="primary" size="mini" icon="el-icon-download" v-on:click="createTask">添加</el-button>
+        <el-switch v-model="onlyexist" active-text="显示当前" inactive-text="所有" @change="onOnlyExist"></el-switch>
+        <template>
+            <el-table v-loading="loading" :data="tableData" stripe style="width: 100%">
+                <el-table-column prop="date" label="日期" width="180">
+                </el-table-column>
+                <el-table-column prop="name" label="名称" width="300">
+                </el-table-column>
+                <el-table-column prop="speed" label="速度">
+                </el-table-column>
+                <el-table-column prop="size" label="大小">
+                </el-table-column>
+                <el-table-column prop="progress" label="进度">
+                    <template slot-scope="scope">
+                        <el-progress type="line" :percentage="scope.row.progress"></el-progress>
+                    </template>
+                </el-table-column>
+                <el-table-column prop="downTime" label="用时">
+                </el-table-column>
+                <el-table-column label="操作" prop="stop">
+                    <template slot-scope="scope">
+                        <el-button type="primary" v-if="scope.row.stop=== 0" icon="el-icon-video-pause" size="mini"
+                            v-on:click="stopTask(scope.$index)">停止</el-button>
+                        <el-button v-else type="primary" icon="el-icon-video-play" size="mini"
+                            v-on:click="startTask(scope.$index)">开始</el-button>
+                        <el-button size="mini" type="danger" icon="el-icon-video-delete"
+                            v-on:click="deleteTask(scope.$index)">删除</el-button>
+                    </template>
+                </el-table-column>
+            </el-table>
+        </template>
+    </div>
+    <script>
+        Vue.component('todo-item', {
+            props: ['todo'],
+            template: '<li>{{ todo.text }}</li>'
+        })
+
+        var app = new Vue({
+            el: '#app',
+            data: {
+                onlyexist: true,
+                loading: false,
+                tableData: [],
+                message: '',
+                url: '',
+            },
+            mounted() {
+                this.getdownload()
+                // Use setInterval to call the getdownload method every 5 seconds to refresh the task list
+                setInterval(() => {
+                    this.getdownload(false)
+                }, 5000); // 5000 milliseconds = 5 seconds
+            },
+            methods: {
+                onOnlyExist: function (item) {
+                    this.updatebytask()
+                },
+                stopTask: function (index) {
+                    this.commonTask('/taskPause', index)
+                },
+                startTask: function (index) {
+                    this.commonTask('/taskStart', index)
+                },
+
+                deleteTask: function (index) {
+                    this.commonTask('/taskDel', index)
+                },
+                updatetasklist: function (data) {
+                    this.tasks = data.remote_download_list.tasks
+                    this.updatebytask()
+                },
+                updatebytask: function () {
+                    this.tableData = this.tasks.filter((a) => {
+                        if (a.completeTime == 0)
+                            return true
+                        if (this.onlyexist)
+                            return a.exist
+                        return true
+                    }).map((a, idx) => {
+                        let { downTime, progress, speed, name, size, createTime, state, type } = a;
+                        name = name + ' state:' + state + ' type:' + type;
+                        if(state==11){
+                            speed =  size/downTime
+                        }
+                        if (speed >= 1000) {
+                            speed = (speed / 1000000).toFixed(2) + 'MB/s'
+                        } else {
+                            speed = (speed / 1000).toFixed(2) + 'KB/s'
+                        }
+                        if (size >= 1073741824) {
+                            size = (size / 1073741824).toFixed(2) + 'GB'
+                        } else if (size >= 1048576) {
+                            size = (size / 1048576).toFixed(2) + 'MB'
+                        } else if (size >= 1024) {
+                            size = (size / 1024).toFixed(2) + 'KB'
+                        } else {
+                            size = size.toFixed(2) + 'B'
+                        }
+                        let hours = Math.floor(downTime / 3600);
+                        let minutes = Math.floor((downTime % 3600) / 60);
+                        downTime = hours ? (hours + '小时') : "" + minutes + '分钟';
+                        console.log(a)
+                        let date = new Date(createTime * 1000)
+                        date = date.toLocaleDateString() + " " + date.toLocaleTimeString()
+                        let stop = state == 0 ? 0 : 1;
+                        let ret = { ...a, downTime, date, name, speed, size, progress: (progress / 100), stop }
+                        return ret
+                    })
+                    // console.log(data)
+                },
+                getdownload: function (loading = true) {
+                    this.loading = loading;
+                    axios.get("/taskList").then(({ data }) => {
+                        this.loading = false;
+                        this.updatetasklist(data)
+                    }).catch((error) => {
+                        this.loading = false;
+                        console.error(error)
+                    })
+                },
+                commonTask: function (url, index) {
+                    this.loading = true;
+                    let { id } = this.tableData[index]
+                    let data = { id }
+                    this.loading = true;
+                    axios.post(url, data)
+                        .then(({ data }) => {
+                            this.loading = false;
+                            this.updatetasklist(data)
+                        })
+                        .catch(error => {
+                            this.loading = false;
+                            console.log(error)
+                            // handle error
+                        })
+                },
+                createTask: function () {
+                    this.loading = true;
+                    let url = this.url
+                    let urls = url.split("\n");
+                    let data = { url, urls }
+                    this.loading = true;
+                    axios.post("/taskCreate", data)
+                        .then(({ data }) => {
+                            this.loading = false;
+                            this.updatetasklist(data)
+                        })
+                        .catch(error => {
+                            this.loading = false;
+                            console.log(error)
+                            // handle error
+                        })
+                }
+            }
+        })
+    </script>
+</body>
+
+</html>
