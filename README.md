@@ -5,7 +5,7 @@ wanke console docker
 ## port 
 default 9003
 
-## volum bind
+## Volumes bind
 conf-folder:/app/conf
 
 ## config file
