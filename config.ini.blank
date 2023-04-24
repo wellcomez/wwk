@@ -1,0 +1,10 @@
+[global]
+#日志级别
+log_level = DEBUG
+#api端口
+port = 9004
+[one_thing_cloud]
+#用户名
+username = 369369 
+#密码
+password = 369369 
