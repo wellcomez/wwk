@@ -6,7 +6,7 @@ wanke console docker
 default 9003
 
 ## volum bind
-xxxx:/app/conf
+conf-folder:/app/conf
 
 ## config file
 config.ini
@@ -22,4 +22,4 @@ username = 369369
 #密码
 password = 369369 
 ~~~
-put config.ini under `xxxx`
+put config.ini under `conf-folder`
