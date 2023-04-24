@@ -4,7 +4,6 @@ FROM python:3.6
 COPY  WanKeYunApi/* /app/WanKeYunApi/
 COPY *.py /app/
 COPY index.html /app/
-COPY onethingcloud/*.py /app/onethingcloud/
 COPY config.ini.blank /app/conf/config.ini
 COPY requirements.txt /app/
 
